@@ -11,9 +11,9 @@ CTimer_manchester::~CTimer_manchester()
 {
 }
 
-bool CTimer_manchester::IRQHandle()
+irq_handlebool CTimer_manchester::IRQHandle()
 {
-	if (CTimer_LPC4370::IRQHandle() == false)	return false;
+	if (CTimer_LPC4370::irq_handle() == false)	return false;
 
 
 	return true;

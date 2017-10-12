@@ -1,5 +1,5 @@
-#ifndef __TIMER_LPC4370
-#define __TIMER_LPC4370
+#ifndef __TIMER_MANCHESTER
+#define __TIMER_MANCHESTER
 
 #include "timer_lpc4370.h"
 class CTimer_manchester :
@@ -9,7 +9,7 @@ public:
 	CTimer_manchester();
 	~CTimer_manchester();
 
-	bool IRQHandle();
+	bool irq_handle();
 };
 
 

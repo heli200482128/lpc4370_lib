@@ -11,13 +11,13 @@ public:
 	CTimer_LPC4370();
 	~CTimer_LPC4370();
 
-	bool open(LPC_TIMER_T* pReg, uint32_t frequency);
-	void close();
+	bool Open(LPC_TIMER_T* pReg, uint32_t frequency);
+	void Close();
 
-	bool start();
-	void stop();
+	bool Start();
+	void Stop();
 
-	virtual bool IRQHandle();
+	virtual bool irq_handle();
 
 private:
 	LPC_TIMER_T* m_pReg_timer;

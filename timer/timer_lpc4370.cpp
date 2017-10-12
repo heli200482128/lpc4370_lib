@@ -1,9 +1,8 @@
 #include "timer_lpc4370.h"
+#include "common\common.h"
 
 
-
-CTimer_LPC4370::CTimer_LPC4370()
-	:m_pReg_timer(0)
+CTimer_LPC4370::CTimer_LPC4370():m_pReg_timer(INVALID_REG)
 {
 }
 
@@ -12,9 +11,9 @@ CTimer_LPC4370::~CTimer_LPC4370()
 {
 }
 
-bool CTimer_LPC4370::open(LPC_TIMER_T* pReg, uint32_t frequency)
+bool CTimer_LPC4370::Open(LPC_TIMER_T* pReg, uint32_t frequency)
 {
-	if (m_pReg_timer)	close();
+	if (REG_IS_VALID(m_pReg_timer))	Close();
 
 	if (update_argument(pReg, frequency) == false)	return false;
 
@@ -39,21 +38,21 @@ bool CTimer_LPC4370::open(LPC_TIMER_T* pReg, uint32_t frequency)
 
 	return true;
 }
-void CTimer_LPC4370::close()
+void CTimer_LPC4370::Close()
 {
-	if (m_pReg_timer == 0)	return;
+	if (!REG_IS_VALID(m_pReg_timer))	return;
 
-	stop();
+	Stop();
 
 	/* Disable timer */
 	Chip_TIMER_Disable(m_pReg_timer);
 
-	m_pReg_timer = 0;
+	m_pReg_timer = INVALID_REG;
 }
 
-bool CTimer_LPC4370::start()
+bool CTimer_LPC4370::Start()
 {
-	if (m_pReg_timer == 0)	return false;
+	if (!REG_IS_VALID(m_pReg_timer))	return false;
 
 	/* Enable timer interrupt */
 	NVIC_EnableIRQ(m_irqn_type);
@@ -62,17 +61,18 @@ bool CTimer_LPC4370::start()
 	return true;
 }
 
-void CTimer_LPC4370::stop()
+void CTimer_LPC4370::Stop()
 {
-	if (m_pReg_timer == 0)	return;
+	if (!REG_IS_VALID(m_pReg_timer))	return;
 
 	/* Disable timer interrupt */
 	NVIC_DisableIRQ(m_irqn_type);
 
 }
 
-inline bool CTimer_LPC4370::IRQHandle()
+inline bool CTimer_LPC4370::irq_handle()
 {
+	// this function is called in IRQHandle, so do not check if m_pReg_timer is valid to save time
 
 	if (Chip_TIMER_MatchPending(m_pReg_timer, LPC4370_TIMER_INDEX(m_pReg_timer)) == false)	return false;
 
@@ -82,9 +82,9 @@ inline bool CTimer_LPC4370::IRQHandle()
 }
 
 
-bool CTimer_LPC4370::update_argument(LPC_TIMER_T* pReg, uint32_t frequency)
+inline bool CTimer_LPC4370::update_argument(LPC_TIMER_T* pReg, uint32_t frequency)
 {
-	if (m_pReg_timer)	return false;
+	if (REG_IS_VALID(m_pReg_timer))	return false;
 	if (frequency == 0)	return false;
 
 	switch ((int)pReg)

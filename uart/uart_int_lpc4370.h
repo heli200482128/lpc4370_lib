@@ -13,15 +13,15 @@ public:
 	CUartInt_LPC4370();
 	~CUartInt_LPC4370();
 
-	bool open(LPC_USART_T *hUart, uint32_t baudrate, uint32_t config);
-	void close();
+	bool Open(const LPC_USART_T *pReg, const uint32_t &baudrate, const uint32_t &config);
+	void Close();
 
-	bool start();
-	void stop();
+	bool Start();
+	void Stop();
 
-	void IRQHandle() { Chip_UART_IRQRBHandler(m_pReg_uart, &m_rxring, &m_txring); }
+	void irq_handle() { Chip_UART_IRQRBHandler(m_pReg_uart, &m_rxring, &m_txring); }
 
-	int getRxCount() { return RingBuffer_GetCount(&m_rxring); }
+	int get_rx_count() { return RingBuffer_GetCount(&m_rxring); }
 
 	int Read(uint8_t *pRx, int rx_count_max);
 	int Write(uint8_t *pTx, int tx_count);
@@ -42,7 +42,11 @@ private:
 	//	return hUart == LPC_USART0 || hUart == LPC_USART2 || hUart == LPC_USART3;
 	//}
 	
-	bool update_argument(LPC_USART_T *pReg);
+	bool update_argument(const LPC_USART_T *pReg);
+
+	bool uart_init();	
+	
+	bool uart_config(const uint32_t &baudrate, const uint32_t &config);
 };
 
 
