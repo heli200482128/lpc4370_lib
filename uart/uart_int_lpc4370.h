@@ -6,7 +6,7 @@
 
 class CUartInt_LPC4370
 {
-#define BUFFER_SIZE	256
+#define UART_BUFFER_SIZE	256
 
 public:
 
@@ -19,7 +19,7 @@ public:
 	bool Start();
 	void Stop();
 
-	void irq_handle() { Chip_UART_IRQRBHandler(m_pReg_uart, &m_rxring, &m_txring); }
+	virtual void irq_handle() { Chip_UART_IRQRBHandler(m_pReg_uart, &m_rxring, &m_txring); }
 
 	int get_rx_count() { return RingBuffer_GetCount(&m_rxring); }
 
@@ -30,8 +30,8 @@ private:
 	LPC_USART_T *m_pReg_uart;
 	IRQn_Type	m_irqn_type;
 
-	uint8_t	m_rxbuff[BUFFER_SIZE];
-	uint8_t	m_txbuff[BUFFER_SIZE];
+	uint8_t	m_rxbuff[UART_BUFFER_SIZE];
+	uint8_t	m_txbuff[UART_BUFFER_SIZE];
 
 public:
 	RINGBUFF_T	m_txring;

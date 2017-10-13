@@ -44,7 +44,11 @@ inline bool CUartInt_LPC4370::uart_init()
 		Chip_SCU_PinMuxSet(0x0A, 1, (SCU_MODE_PULLDOWN | SCU_MODE_FUNC3));
 		Chip_SCU_PinMuxSet(0x0A, 2, (SCU_MODE_INACT | SCU_MODE_INBUFF_EN | SCU_MODE_ZIF_DIS | SCU_MODE_FUNC3));
 		break;
-	case (int)LPC_USART3:	return false;
+	case (int)LPC_USART3:	
+		/* P2_3 : UART3_TXD -> J3 Pin-17, P2_4 : UART3_RXD ->  J3 Pin-12*/
+		Chip_SCU_PinMuxSet(0x02, 3, (SCU_MODE_PULLDOWN | SCU_MODE_FUNC2));
+		Chip_SCU_PinMuxSet(0x02, 4, (SCU_MODE_INACT | SCU_MODE_INBUFF_EN | SCU_MODE_ZIF_DIS | SCU_MODE_FUNC2));
+		break;
 	default:			return false;
 	}
 
@@ -99,12 +103,12 @@ inline bool CUartInt_LPC4370::uart_config(const uint32_t &baudrate, const uint32
 
 	/* Before using the ring buffers, initialize them using the ring
 	buffer init function */
-	RingBuffer_Init(&m_rxring, m_rxbuff, 1, BUFFER_SIZE);
-	RingBuffer_Init(&m_txring, m_txbuff, 1, BUFFER_SIZE);
+	RingBuffer_Init(&m_rxring, m_rxbuff, 1, UART_BUFFER_SIZE);
+	RingBuffer_Init(&m_txring, m_txbuff, 1, UART_BUFFER_SIZE);
 
 	/* Enable Interrupt for UART channel */
 	/* Priority = 1 */
-	//NVIC_SetPriority(m_irqn_type, 1);
+	NVIC_SetPriority(m_irqn_type, 1);
 	///* Enable Interrupt for UART channel */
 	//NVIC_EnableIRQ(m_irqn_type);
 
