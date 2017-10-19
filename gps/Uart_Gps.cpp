@@ -45,27 +45,6 @@ bool CUart_Gps::GetPosition(double &latitude, double  &longitude)
 	if (raw_gps_data_count_used <= 0)	return false;
 	
 	
-
-//////////////////////////////////////////////////////////////////////////////	
-///////////debug//////////////////////////////////////////////////////////////	
-
-	Write((uint8_t*)m_raw_gps_data.p_data, raw_gps_data_count_used);
-//	
-//	m_raw_gps_data.data_count = 0;
-//	while (list_gps_data)
-//	{
-//		PNODE_GPS_DATA pnode_gps_data = list_gps_data;
-//		list_gps_data = pnode_gps_data->next;
-
-//		free(pnode_gps_data->p_nmea);
-//		free(pnode_gps_data);
-//	}
-//	
-//	return false;
-///////////debug//////////////////////////////////////////////////////////////	
-//////////////////////////////////////////////////////////////////////////////	
-
-
 	//update raw gps data: remove processed data
 	m_raw_gps_data.data_count -= raw_gps_data_count_used;
 	memmove(m_raw_gps_data.p_data, m_raw_gps_data.p_data + raw_gps_data_count_used, m_raw_gps_data.data_count);

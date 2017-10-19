@@ -1,5 +1,5 @@
-#ifndef __UART_GPS
-#define __UART_GPS
+#ifndef __UART_GPS_H
+#define __UART_GPS_H
 
 #include "uart\uart_int_lpc4370.h"
 #include "nmea\protocol_gps.h"

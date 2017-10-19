@@ -15,9 +15,12 @@ public:
 	void Close();
 
 	bool Start();
-	void Stop();
+	virtual void Stop();
 
 	virtual bool irq_handle();
+
+protected:
+	bool	m_bRunning;
 
 private:
 	LPC_TIMER_T* m_pReg_timer;

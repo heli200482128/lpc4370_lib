@@ -58,6 +58,8 @@ bool CTimer_LPC4370::Start()
 	NVIC_EnableIRQ(m_irqn_type);
 	NVIC_ClearPendingIRQ(m_irqn_type);
 
+	m_bRunning = true;
+
 	return true;
 }
 
@@ -67,6 +69,9 @@ void CTimer_LPC4370::Stop()
 
 	/* Disable timer interrupt */
 	NVIC_DisableIRQ(m_irqn_type);
+
+	m_bRunning = false;
+
 
 }
 
@@ -101,3 +106,6 @@ inline bool CTimer_LPC4370::update_argument(LPC_TIMER_T* pReg, uint32_t frequenc
 
 	return true;
 }
+
+
+
