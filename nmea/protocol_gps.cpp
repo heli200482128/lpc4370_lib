@@ -1,44 +1,123 @@
-#include <sstream>
-#include <iomanip>
+#include <stdlib.h>
 #include "protocol_gps.h"
-using namespace std;
 
 CProtocolGps::CProtocolGps()
 {
 	nmea_parser_init(&m_parser);
+
 }
 
 CProtocolGps::~CProtocolGps(void)
 {
 	nmea_parser_destroy(&m_parser);
+
 }
 
-void CProtocolGps::split(string &raw_data, vector<string> &list_gps_data)
+
+LIST_GPS_DATA CProtocolGps::split(char *p_raw_data, unsigned int &raw_data_count) 
 {
-	const string raw_data_original = raw_data;
+	LIST_GPS_DATA p_list_gps_data = NULL;
+	PNODE_GPS_DATA p_node_gps_data_last = NULL;
 
-	list_gps_data.clear();
-
-	// split 'gps_data' into single gps messages, and store messages into 'list_gps_data'
-	size_t iMsgStart = 0, iMsgEnd = 0;
-	while ((iMsgEnd = raw_data_original.find("\r\n", iMsgStart)) != string::npos)
+	char *p_raw_data_unused = p_raw_data;
+	char *p_raw_data_found = NULL;
+	unsigned int gps_data_length = 0;
+	
+	while(1)
 	{
-		string gps_data_gp = convertTypeToGP(raw_data_original.substr(iMsgStart, iMsgEnd + 2));
+		p_raw_data_found = strstr(p_raw_data_unused, "\r\n");
 
-		if (!gps_data_gp.empty())	list_gps_data.push_back(gps_data_gp);
+		if (p_raw_data_found == NULL)	break;
+		
+		gps_data_length = p_raw_data_found + 2 - p_raw_data_unused;
+		
+		PNODE_GPS_DATA p_node_gps_data_tmp = (PNODE_GPS_DATA)malloc(sizeof(NODE_GPS_DATA));
+		p_node_gps_data_tmp->next = NULL;
+		p_node_gps_data_tmp->p_nmea = (char*)malloc(gps_data_length + 1);
+		memmove(p_node_gps_data_tmp->p_nmea, p_raw_data_unused, gps_data_length);
+		p_node_gps_data_tmp->p_nmea[gps_data_length] = '\0';
+		
+		convertTypeToGP(p_node_gps_data_tmp->p_nmea);
 
-		iMsgStart = iMsgEnd + 2;
+		if (p_list_gps_data == NULL)
+		{
+			p_list_gps_data = p_node_gps_data_last = p_node_gps_data_tmp;
+		}
+		else
+		{
+			p_node_gps_data_last->next = p_node_gps_data_tmp;
+			p_node_gps_data_last = p_node_gps_data_tmp;
+		}
+
+		p_raw_data_unused = p_raw_data_found + 2;
 	}
 
+	raw_data_count = p_raw_data_unused - p_raw_data;
+
+	return p_list_gps_data;
 }
 
-void CProtocolGps::parse(const string &gps_data, nmeaINFO &gps_info)
+/********************************************************************************************/
+/* Function: split raw gps string into list of gps data                                     */
+/* Argument: p_raw_data    [I] - raw gps string, ends with '\0'                             */
+/*           raw_data_count[I] - size of raw gps string									    */
+/*           list_gps_data [O] - list of gps data (nmea datagram -- $...\r\n\0),            */
+/*                               be null when comes in 			                            */
+/* Return  : >=0 - size of used raw gps string                                              */
+/*           -1  - error occured                                                            */
+/********************************************************************************************/
+
+int CProtocolGps::split(const char *p_raw_data, const int raw_data_count, LIST_GPS_DATA &list_gps_data)
+{
+	if (list_gps_data)	return -1;
+
+	PNODE_GPS_DATA p_node_gps_data_last = NULL;
+
+	char *p_raw_data_unused = (char*)p_raw_data;
+	char *p_raw_data_found = NULL;
+	unsigned int gps_data_length = 0;
+	
+	while(1)
+	{
+		p_raw_data_found = strstr(p_raw_data_unused, "\r\n");
+
+		if (p_raw_data_found == NULL)	break;
+		
+		gps_data_length = p_raw_data_found + 2 - p_raw_data_unused;
+		
+		PNODE_GPS_DATA p_node_gps_data_tmp = (PNODE_GPS_DATA)malloc(sizeof(NODE_GPS_DATA));
+		p_node_gps_data_tmp->next = NULL;
+		p_node_gps_data_tmp->p_nmea = (char*)malloc(gps_data_length + 1);
+		memmove(p_node_gps_data_tmp->p_nmea, p_raw_data_unused, gps_data_length);
+		p_node_gps_data_tmp->p_nmea[gps_data_length] = '\0';
+		
+//		convertTypeToGP(p_node_gps_data_tmp->p_nmea);
+
+		if (list_gps_data == NULL)
+		{
+			list_gps_data = p_node_gps_data_last = p_node_gps_data_tmp;
+		}
+		else
+		{
+			p_node_gps_data_last->next = p_node_gps_data_tmp;
+			p_node_gps_data_last = p_node_gps_data_tmp;
+		}
+
+		p_raw_data_unused = p_raw_data_found + 2;
+	}
+
+	return p_raw_data_unused - p_raw_data;
+
+}
+	
+
+void CProtocolGps::parse(const char *p_gps_data, nmeaINFO &gps_info)
 {
 	nmeaINFO gps_info_tmp;
 
 	nmea_zero_INFO(&gps_info_tmp);
 
-	nmea_parse(&m_parser, gps_data.c_str(), gps_data.size(), &gps_info_tmp);
+	nmea_parse(&m_parser, p_gps_data, strlen(p_gps_data), &gps_info_tmp);
 	
 	memcpy(&gps_info, &gps_info_tmp, sizeof(nmeaINFO));
 
@@ -46,51 +125,47 @@ void CProtocolGps::parse(const string &gps_data, nmeaINFO &gps_info)
 
 
 
-string CProtocolGps::convertTypeToGP(string gps_data)
+void CProtocolGps::convertTypeToGP(char *p_gps_data)
 {
-	if (gps_data.at(0) != '$' || gps_data.at(gps_data.size()-2) != '\r' || gps_data.at(gps_data.size()-1) != '\n')
-	{
-		return string();
-	}
+	if (p_gps_data == NULL)	return;
 
 	GPS_TYPE gps_type = GPS_GP;
 
+	char *p_gps_start = p_gps_data;
+
 	//check source gps type
-	if (gps_data.find(HEADER_GPS_GP) != string::npos)		gps_type = GPS_GP;
-	else if (gps_data.find(HEADER_GPS_BL) != string::npos)	gps_type = GPS_BL;
-	else if (gps_data.find(HEADER_GPS_BD) != string::npos)	gps_type = GPS_BD;
-	else if (gps_data.find(HEADER_GPS_GN) != string::npos)	gps_type = GPS_GN;
+	if ((p_gps_start = strstr(p_gps_data, HEADER_GPS_GP)) != NULL)	return;
+	else if ((p_gps_start = strstr(p_gps_data, HEADER_GPS_GL)) != NULL)	gps_type = GPS_GL;
+	else if ((p_gps_start = strstr(p_gps_data, HEADER_GPS_BD)) != NULL)	gps_type = GPS_BD;
+	else if ((p_gps_start = strstr(p_gps_data, HEADER_GPS_GN)) != NULL)	gps_type = GPS_GN;
+	else return;
 
-
-	//get source gps header
-	string src_gps_header;
-	switch (gps_type)
-	{
-	case GPS_GP:return gps_data;
-	case GPS_BD:src_gps_header = HEADER_GPS_BD;	break;
-	case GPS_BL:src_gps_header = HEADER_GPS_BL;	break;
-	case GPS_GN:src_gps_header = HEADER_GPS_GN;	break;
-	default:
-		return string();
-	}
 
 	//replace source gps header to gps_gp header
-	string gps_src_data = gps_data.substr(0, gps_data.find('*'));
-	string gps_gp_data = gps_src_data.replace(gps_src_data.find(src_gps_header), src_gps_header.size(), HEADER_GPS_GP);
+	switch (gps_type)
+	{
+	case GPS_GP:	return;
+	case GPS_BD:	memcpy(p_gps_start, HEADER_GPS_BD, strlen(HEADER_GPS_BD));	break;
+	case GPS_GL:	memcpy(p_gps_start, HEADER_GPS_GL, strlen(HEADER_GPS_GL));	break;
+	case GPS_GN:	memcpy(p_gps_start, HEADER_GPS_GN, strlen(HEADER_GPS_GN));	break;
+	default:		return;
+	}
+
+	char *p_gps_end = strstr(p_gps_start, "*");
+	if (p_gps_end == NULL)	return;
+
 
 	//calculate crc of gps_gp data
 	unsigned char crc = 0;
-	for (size_t iData = 1; iData < gps_gp_data.size(); iData++)
+	for (char *p_char = p_gps_start+1; p_char < p_gps_end; p_char++)
 	{
-		crc ^= gps_gp_data.at(iData);
+		crc ^= *p_char;
 	}
 
-	//pack gps_gp message
-	ostringstream gps_gp;
-	gps_gp.clear();
-	gps_gp << gps_gp_data << "*" << hex << setw(2) << setfill('0') << (int)crc << dec << "\r\n";
+	
+	//replace new crc to gps_gp crc
+	sprintf(p_gps_end + 1, "%02x", crc);
 
-	return gps_gp.str();
 }
 
 

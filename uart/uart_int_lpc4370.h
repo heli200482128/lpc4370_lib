@@ -38,9 +38,6 @@ public:
 	RINGBUFF_T	m_rxring;
 
 private:
-	//bool handle_valid(LPC_USART_T *hUart) {
-	//	return hUart == LPC_USART0 || hUart == LPC_USART2 || hUart == LPC_USART3;
-	//}
 	
 	bool update_argument(const LPC_USART_T *pReg);
 
