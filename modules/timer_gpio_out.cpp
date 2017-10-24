@@ -34,7 +34,7 @@ void CTimer_GpioOut::Deinit()
 }
 
 
-bool CTimer_GpioOut::Start(unsigned char *p_sequence, unsigned int sequence_length)
+bool CTimer_GpioOut::Start(bool *p_sequence, unsigned int sequence_length)
 {
 	if (m_bRunning)	return false;
 
@@ -45,7 +45,7 @@ bool CTimer_GpioOut::Start(unsigned char *p_sequence, unsigned int sequence_leng
 
 void CTimer_GpioOut::Stop()
 {
-	CTimer_GpioOut::Stop();
+	CTimer_LPC4370::Stop();
 	m_gpio_sequence.reinit();
 }    
 
@@ -55,7 +55,7 @@ bool CTimer_GpioOut::irq_handle()
 
 	if (m_gpio_sequence.data_offset_unused < m_gpio_sequence.data_length)
 	{
-
+		Write(m_gpio_sequence.p_data[m_gpio_sequence.data_offset_unused++]);
 	}
 
 	return true;

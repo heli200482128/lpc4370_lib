@@ -20,7 +20,7 @@ public:
 	CUart_Gps();
 	~CUart_Gps();
 
-	bool GetPosition(double &latitude, double  &longitude);
+	int GetPosition(double &latitude, double  &longitude, double &altitude);
 private:
 	nmeaINFO	m_gps_info;
 

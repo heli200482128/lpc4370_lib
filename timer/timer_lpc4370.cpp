@@ -2,7 +2,7 @@
 #include "common\common.h"
 
 
-CTimer_LPC4370::CTimer_LPC4370():m_pReg_timer(INVALID_REG)
+CTimer_LPC4370::CTimer_LPC4370() : m_pReg_timer(INVALID_REG),m_frequency(0)
 {
 }
 
@@ -29,10 +29,10 @@ bool CTimer_LPC4370::Open(LPC_TIMER_T* pReg, uint32_t frequency)
 
 	/* Timer setup for match and interrupt at TICKRATE_HZ */
 	Chip_TIMER_Reset(m_pReg_timer);
-	Chip_TIMER_MatchEnableInt(m_pReg_timer, LPC4370_TIMER_INDEX(m_pReg_timer));
-	Chip_TIMER_SetMatch(m_pReg_timer, LPC4370_TIMER_INDEX(m_pReg_timer),
+	Chip_TIMER_MatchEnableInt(m_pReg_timer, m_matchnum);
+	Chip_TIMER_SetMatch(m_pReg_timer, m_matchnum,
 		(Chip_Clock_GetRate(m_ccu_clk) / m_frequency) - 1);
-	Chip_TIMER_ResetOnMatchEnable(m_pReg_timer, LPC4370_TIMER_INDEX(m_pReg_timer));
+	Chip_TIMER_ResetOnMatchEnable(m_pReg_timer, m_matchnum);
 	Chip_TIMER_Enable(m_pReg_timer);
 
 
@@ -79,9 +79,9 @@ inline bool CTimer_LPC4370::irq_handle()
 {
 	// this function is called in IRQHandle, so do not check if m_pReg_timer is valid to save time
 
-	if (Chip_TIMER_MatchPending(m_pReg_timer, LPC4370_TIMER_INDEX(m_pReg_timer)) == false)	return false;
+	if (Chip_TIMER_MatchPending(m_pReg_timer, m_matchnum) == false)	return false;
 
-	Chip_TIMER_ClearMatch(m_pReg_timer, LPC4370_TIMER_INDEX(m_pReg_timer));
+	Chip_TIMER_ClearMatch(m_pReg_timer, m_matchnum);
 
 	return true;
 }
@@ -94,10 +94,10 @@ inline bool CTimer_LPC4370::update_argument(LPC_TIMER_T* pReg, uint32_t frequenc
 
 	switch ((int)pReg)
 	{
-	case (int)LPC_TIMER0:	m_rgu_reset = RGU_TIMER0_RST;	m_ccu_clk = CLK_MX_TIMER0;	m_irqn_type = TIMER0_IRQn;	break;
-	case (int)LPC_TIMER1:	m_rgu_reset = RGU_TIMER1_RST;	m_ccu_clk = CLK_MX_TIMER1;	m_irqn_type = TIMER1_IRQn;	break;
-	case (int)LPC_TIMER2:	m_rgu_reset = RGU_TIMER2_RST;	m_ccu_clk = CLK_MX_TIMER2;	m_irqn_type = TIMER2_IRQn;	break;
-	case (int)LPC_TIMER3:	m_rgu_reset = RGU_TIMER3_RST;	m_ccu_clk = CLK_MX_TIMER3;	m_irqn_type = TIMER3_IRQn;	break;
+	case (int)LPC_TIMER0:	m_matchnum = 0;	 m_rgu_reset = RGU_TIMER0_RST;	m_ccu_clk = CLK_MX_TIMER0;	m_irqn_type = TIMER0_IRQn;	break;
+	case (int)LPC_TIMER1:	m_matchnum = 1;	 m_rgu_reset = RGU_TIMER1_RST;	m_ccu_clk = CLK_MX_TIMER1;	m_irqn_type = TIMER1_IRQn;	break;
+	case (int)LPC_TIMER2:	m_matchnum = 2;	 m_rgu_reset = RGU_TIMER2_RST;	m_ccu_clk = CLK_MX_TIMER2;	m_irqn_type = TIMER2_IRQn;	break;
+	case (int)LPC_TIMER3:	m_matchnum = 3;	 m_rgu_reset = RGU_TIMER3_RST;	m_ccu_clk = CLK_MX_TIMER3;	m_irqn_type = TIMER3_IRQn;	break;
 	default:	return false;
 	}
 

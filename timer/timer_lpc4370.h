@@ -3,8 +3,6 @@
 
 #include "chip.h"
 
-#define LPC4370_TIMER_INDEX(pReg_timer) (pReg_timer - LPC_TIMER0)
-
 class CTimer_LPC4370
 {
 public:
@@ -23,9 +21,10 @@ protected:
 	bool	m_bRunning;
 
 private:
-	LPC_TIMER_T* m_pReg_timer;
-	uint32_t m_frequency;
+	LPC_TIMER_T*	m_pReg_timer;
+	uint32_t		m_frequency;
 
+	int8_t			m_matchnum;
 	CHIP_RGU_RST_T	m_rgu_reset;
 	CHIP_CCU_CLK_T	m_ccu_clk;
 	IRQn_Type		m_irqn_type;

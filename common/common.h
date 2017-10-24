@@ -9,4 +9,6 @@
 #define REG_IS_VALID(pReg)	((pReg) != INVALID_REG)
 
 
+#define FLOAT_EQU_0(x)	(abs(x)<0.00001)
+
 #endif

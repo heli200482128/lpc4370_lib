@@ -18,10 +18,19 @@ CUart_Gps::~CUart_Gps()
 }
 
 
+/********************************************************************************************/
+/* Function: get gps position information(altitude/latitude/longitude)                      */
+/* Argument: latitude [O] - gps latitude in NDEG - +/-[degree][min].[sec/60](gps format)    */
+/*           longitude[O] - gps longitude  in NDEG - +/-[degree][min].[sec/60](gps format)  */
+/*           altitude [O] - gps atitude              			                            */
+/* Return  :  1 - receive valid gps position information                                    */
+/*            0 - no complete nmea package received                                         */
+/*           -1 - receive complete nmea package, but gps is unlocated                       */
+/********************************************************************************************/
 
-bool CUart_Gps::GetPosition(double &latitude, double  &longitude)
+int CUart_Gps::GetPosition(double &latitude, double  &longitude, double &altitude)
 {
-	bool b_result = false;
+	int result = 0;
 
 	//get new raw gps data and store into m_raw_gps_data;
 	int new_raw_gps_data_length = Read((uint8_t*)(m_raw_gps_data.p_data + m_raw_gps_data.data_count),
@@ -29,7 +38,7 @@ bool CUart_Gps::GetPosition(double &latitude, double  &longitude)
 	
 	//if no new raw gps data found, return
 	if (new_raw_gps_data_length == 0)	
-		return b_result;
+		return result;
 
 	//update length of raw gps data 
 	m_raw_gps_data.data_count += new_raw_gps_data_length;
@@ -42,7 +51,7 @@ bool CUart_Gps::GetPosition(double &latitude, double  &longitude)
 	LIST_GPS_DATA list_gps_data = NULL;
 	int raw_gps_data_count_used = split(m_raw_gps_data.p_data, m_raw_gps_data.data_count, list_gps_data);
 
-	if (raw_gps_data_count_used <= 0)	return false;
+	if (raw_gps_data_count_used <= 0)	return result;
 	
 	
 	//update raw gps data: remove processed data
@@ -52,7 +61,7 @@ bool CUart_Gps::GetPosition(double &latitude, double  &longitude)
 
 	//if no complete gps data found, return
 	if (list_gps_data == NULL)	
-		return b_result;
+		return result;
 
 	//if package that starts with $GPRMC found and pos is valid, update pos to argument list
 	static nmeaINFO gps_info;
@@ -65,21 +74,22 @@ bool CUart_Gps::GetPosition(double &latitude, double  &longitude)
 		free(pnode_gps_data->p_nmea);
 		free(pnode_gps_data);
 
-		if ((gps_info.smask | GPRMC) == 0) continue;
+		if ((gps_info.smask |GPGGA) == 0) continue;
 
 		if (gps_info.sig)
 		{
-			b_result = true;
+			result = 1;
 			latitude = gps_info.lat;
 			longitude = gps_info.lon;
+			altitude = gps_info.elv;
 		}
 		else
 		{
-			b_result = false;
+			result = -1;
 		}
 
 	}
 
 
-	return b_result;
+	return result;
 }

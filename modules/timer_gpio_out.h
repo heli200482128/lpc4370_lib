@@ -8,7 +8,7 @@
 
 typedef struct __gpio_sequence
 {
-	unsigned char *p_data;
+	bool			*p_data;
 	unsigned int	data_length;
 	unsigned int	data_offset_unused;
 	void reinit()
@@ -19,11 +19,11 @@ typedef struct __gpio_sequence
 		data_offset_unused = 0;
 	}
 	
-	void setup(unsigned char *p_data_new, unsigned int data_length_new)
+	void setup(bool *p_data_new, unsigned int data_length_new)
 	{
 		if(p_data_new == NULL || data_length_new == 0)	return;
-		p_data = (unsigned char*)malloc(data_length_new);
-		memmove(p_data, p_data_new, data_length_new);
+		p_data = (bool *)malloc(data_length_new * sizeof(bool));
+		memmove(p_data, p_data_new, data_length_new * sizeof(bool));
 		data_length = data_length_new;
 		data_offset_unused = 0;
 	}
@@ -40,7 +40,7 @@ public:
 				const uint8_t &gpio_port, const uint8_t &gpio_pin, const uint16_t &config);
 	void Deinit();
 
-	bool Start(unsigned char *p_sequence, unsigned int sequence_length);
+	bool Start(bool *p_sequence, unsigned int sequence_length);
 	virtual void Stop();
 
 	virtual bool irq_handle();
