@@ -35,9 +35,12 @@ public:
 	CTimer_GpioOut();
 	~CTimer_GpioOut();
 
+//	bool Init(LPC_TIMER_T* pRegTimer, uint32_t frequency,
+//				const uint8_t &chip_port, const uint8_t &chip_pin,
+//				const uint8_t &gpio_port, const uint8_t &gpio_pin, const uint16_t &config);
+
 	bool Init(LPC_TIMER_T* pRegTimer, uint32_t frequency,
-				const uint8_t &chip_port, const uint8_t &chip_pin,
-				const uint8_t &gpio_port, const uint8_t &gpio_pin, const uint16_t &config);
+				const CHIP_GPIO chip_gpio, const uint16_t &config);
 	void Deinit();
 
 	bool Start(bool *p_sequence, unsigned int sequence_length);

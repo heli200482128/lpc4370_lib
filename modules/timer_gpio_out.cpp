@@ -13,11 +13,25 @@ CTimer_GpioOut::~CTimer_GpioOut()
 	m_gpio_sequence.reinit();
 }
 
+//bool CTimer_GpioOut::Init(LPC_TIMER_T* pRegTimer, uint32_t frequency,
+//								const uint8_t &chip_port, const uint8_t &chip_pin,
+//								const uint8_t &gpio_port, const uint8_t &gpio_pin, const uint16_t &config)
+//{
+//	if (CGpio_LPC4370::Open(chip_port, chip_pin, gpio_port, gpio_pin, GPIO_DIR_OUTPUT, config) == false)	return false;
+//	
+//	if (CTimer_LPC4370::Open(pRegTimer, frequency) == false)
+//	{
+//		CGpio_LPC4370::Close();
+//		return false;
+//	}
+//	
+//	return true;
+//}
+
 bool CTimer_GpioOut::Init(LPC_TIMER_T* pRegTimer, uint32_t frequency,
-								const uint8_t &chip_port, const uint8_t &chip_pin,
-								const uint8_t &gpio_port, const uint8_t &gpio_pin, const uint16_t &config)
+													const CHIP_GPIO chip_gpio, const uint16_t &config)
 {
-	if (CGpio_LPC4370::Open(chip_port, chip_pin, gpio_port, gpio_pin, GPIO_DIR_OUTPUT, config) == false)	return false;
+	if (CGpio_LPC4370::Open(chip_gpio, GPIO_DIR_OUTPUT, config) == false)	return false;
 	
 	if (CTimer_LPC4370::Open(pRegTimer, frequency) == false)
 	{
@@ -27,6 +41,7 @@ bool CTimer_GpioOut::Init(LPC_TIMER_T* pRegTimer, uint32_t frequency,
 	
 	return true;
 }
+
 void CTimer_GpioOut::Deinit()
 {
 	CTimer_LPC4370::Close();

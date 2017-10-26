@@ -8,66 +8,70 @@
 
 
 CGpio_LPC4370::CGpio_LPC4370()
-:m_chip_port(INVALID_PORT_PIN),m_chip_pin(INVALID_PORT_PIN),m_gpio_port(INVALID_PORT_PIN),m_gpio_pin(INVALID_PORT_PIN)
+:m_gpio_port(INVALID_PORT_PIN), m_gpio_pin(INVALID_PORT_PIN)
 {
 }
 
-//bool CGpio_LPC4370::gpio_config(const uint16_t &config)
+
+bool CGpio_LPC4370::gpio_valid()
+{ 
+	return !(m_gpio_port == INVALID_PORT_PIN || m_gpio_pin == INVALID_PORT_PIN);
+}
+//bool CGpio_LPC4370::argument_valid(CHIP_GPIO chip_gpio)
 //{
-//	if (!argument_valid()) return false;
+//	return !(chip_gpio.chip_port == INVALID_PORT_PIN || chip_gpio.chip_pin == INVALID_PORT_PIN ||
+//			chip_gpio.gpio_port == INVALID_PORT_PIN || chip_gpio.gpio_pin == INVALID_PORT_PIN);
+//}
+
+
+//bool CGpio_LPC4370::Open(const uint8_t chip_port, const uint8_t chip_pin, 
+//						const uint8_t gpio_port, const uint8_t gpio_pin, 
+//						const bool output, const uint16_t config)
+//{
+//	if (argument_valid() == false)	Close();
+//
+//	m_chip_port = chip_port;
+//	m_chip_pin = chip_pin;
+//	m_gpio_port = gpio_port;
+//	m_gpio_pin = gpio_pin;
+//
+//
+//	Chip_GPIO_Init(LPC_GPIO_PORT);
 //
 //	/* Set pin back to GPIO (on some boards may have been changed to something
 //	else by Board_Init()) */
 //	Chip_SCU_PinMuxSet(m_chip_port, m_chip_pin, config);
 //
-//	/* Configure GPIO pin as input */
-//	Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, m_chip_port, m_chip_pin);
-//
-//	///* Configure interrupt channel for the GPIO pin in SysCon block */
-//	//Chip_SCU_GPIOIntPinSel(PININT_INDEX, TEST_INPUT_PORT, TEST_INPUT_PIN);
-//
-//	///* Configure channel interrupt as edge sensitive and falling edge interrupt */
-//	//Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH(PININT_INDEX));
-//	//Chip_PININT_SetPinModeEdge(LPC_GPIO_PIN_INT, PININTCH(PININT_INDEX));
-//	//Chip_PININT_EnableIntLow(LPC_GPIO_PIN_INT, PININTCH(PININT_INDEX));
+//	/* Configure GPIO pin's direction */
+//	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, m_gpio_port, m_gpio_pin, output);
+//	//Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, m_gpio_port, m_gpio_pin);
 //
 //	return true;
 //}
 
-bool CGpio_LPC4370::argument_valid() 
-{ 
-	return !(m_chip_port == INVALID_PORT_PIN || m_chip_pin == INVALID_PORT_PIN || m_gpio_port == INVALID_PORT_PIN || m_gpio_pin == INVALID_PORT_PIN); 
-}
-
-
-bool CGpio_LPC4370::Open(const uint8_t chip_port, const uint8_t chip_pin, 
-						const uint8_t gpio_port, const uint8_t gpio_pin, 
-						const bool output, const uint16_t config)
+bool CGpio_LPC4370::Open(const CHIP_GPIO chip_gpio, const bool output, const uint16_t config)
 {
-	if (argument_valid() == false)	Close();
+	if (gpio_valid() == false)	Close();
+	
+	m_gpio_port = chip_gpio.gpio_port;
+	m_gpio_pin = chip_gpio.gpio_pin;
 
-	m_chip_port = chip_port;
-	m_chip_pin = chip_pin;
-	m_gpio_port = gpio_port;
-	m_gpio_pin = gpio_pin;
-
-
+		
 	Chip_GPIO_Init(LPC_GPIO_PORT);
-
+	
 	/* Set pin back to GPIO (on some boards may have been changed to something
 	else by Board_Init()) */
-	Chip_SCU_PinMuxSet(m_chip_port, m_chip_pin, config);
-
+	Chip_SCU_PinMuxSet(chip_gpio.chip_port, chip_gpio.chip_pin, config | chip_gpio.func_index);
+	
 	/* Configure GPIO pin's direction */
-	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, m_gpio_port, m_gpio_pin, output);
+	Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, chip_gpio.gpio_port, chip_gpio.gpio_pin, output);
 	//Chip_GPIO_SetPinDIRInput(LPC_GPIO_PORT, m_gpio_port, m_gpio_pin);
-
+	
 	return true;
 }
+
 void CGpio_LPC4370::Close()
 {
-	m_chip_port = INVALID_PORT_PIN;
-	m_chip_pin = INVALID_PORT_PIN;
 	m_gpio_port = INVALID_PORT_PIN;
 	m_gpio_pin = INVALID_PORT_PIN;
 
@@ -101,19 +105,38 @@ inline bool CGpioInt_LPC4370::update_argument(const uint8_t &pin_int)
 	return true;
 }
 
-inline bool CGpioInt_LPC4370::gpio_init_config()
+inline bool CGpioInt_LPC4370::gpio_init_config(const GPIO_INT_TYPE gpio_int_type)
 {
-	if (!argument_valid()  || m_pin_int == INVALID_PIN_INT)	return false;
+	if (!gpio_valid()  || m_pin_int == INVALID_PIN_INT)	return false;
 
 	Chip_PININT_Init(LPC_GPIO_PIN_INT);
 
 	/* Configure interrupt channel for the GPIO pin in SysCon block */
 	Chip_SCU_GPIOIntPinSel(m_pin_int, m_gpio_port, m_gpio_pin);
 
-	/* Configure channel interrupt as edge sensitive and falling edge interrupt */
+	/* Configure channel interrupt */
 	Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
-	Chip_PININT_SetPinModeEdge(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
-	Chip_PININT_EnableIntLow(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+	switch (gpio_int_type)
+	{
+	case GPIO_INT_EDGE_RISING:	// edge sensitive and rising edge interrupt
+		Chip_PININT_SetPinModeEdge(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		Chip_PININT_EnableIntHigh(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		break;
+	case GPIO_INT_EDGE_FALLING:	// edge sensitive and falling edge interrupt
+		Chip_PININT_SetPinModeEdge(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		Chip_PININT_EnableIntLow(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		break;
+	case GPIO_INT_LEVEL_HIGH:	// level sensitive and high level interrupt
+		Chip_PININT_SetPinModeLevel(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		Chip_PININT_EnableIntHigh(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		break;
+	case GPIO_INT_LEVEL_LOW:	// level sensitive and low level interrupt
+		Chip_PININT_SetPinModeLevel(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		Chip_PININT_EnableIntLow(LPC_GPIO_PIN_INT, PININTCH(m_pin_int));
+		break;
+	default:
+		break;
+	}
 
 	/* Enable interrupt in the NVIC */
 	NVIC_ClearPendingIRQ(m_irqn_type);
@@ -122,24 +145,41 @@ inline bool CGpioInt_LPC4370::gpio_init_config()
 	return true;
 }
 
+//
+//bool CGpioInt_LPC4370::Open(const uint8_t chip_port, const uint8_t chip_pin, 
+//														const uint8_t gpio_port, const uint8_t gpio_pin, const uint16_t func_index, 
+//														const uint8_t pin_int, const GPIO_INT_TYPE gpio_int_type)
+//{
+//
+//	if (CGpio_LPC4370::Open(chip_port, chip_pin, gpio_port, gpio_pin, GPIO_DIR_INPUT, (SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | func_index)) == false)
+//		return false;
+//	
+//	if (update_argument(pin_int) == false)
+//		return false;
+//
+//	if (gpio_init_config(gpio_int_type) == false)
+//		return false;
+//
+//	return true;
+//
+//}
 
-bool CGpioInt_LPC4370::Open(const uint8_t &chip_port, const uint8_t &chip_pin, 
-							const uint8_t &gpio_port, const uint8_t &gpio_pin,
-							const uint16_t &func_index, const uint8_t &pin_int)
+bool CGpioInt_LPC4370::Open(const CHIP_GPIO chip_gpio, const uint8_t pin_int, const GPIO_INT_TYPE gpio_int_type)
 {
 
-	if (CGpio_LPC4370::Open(chip_port, chip_pin, gpio_port, gpio_pin, GPIO_DIR_INPUT, (SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | func_index)) == false)
+	if (CGpio_LPC4370::Open(chip_gpio, GPIO_DIR_INPUT, (SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP)) == false)
 		return false;
-	
+
 	if (update_argument(pin_int) == false)
 		return false;
 
-	if (gpio_init_config() == false)
+	if (gpio_init_config(gpio_int_type) == false)
 		return false;
 
 	return true;
 
 }
+
 
 void CGpioInt_LPC4370::Close()
 {
