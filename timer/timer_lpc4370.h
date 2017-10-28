@@ -2,6 +2,7 @@
 #define __TIMER_LPC4370
 
 #include "chip.h"
+#include "common\common.h"
 
 class CTimer_LPC4370
 {
@@ -16,6 +17,9 @@ public:
 	virtual void Stop();
 
 	virtual bool irq_handle();
+
+	bool isValid() { return REG_IS_VALID(m_pReg_timer); }
+	bool isRunning() { return m_bRunning; }
 
 protected:
 	bool	m_bRunning;

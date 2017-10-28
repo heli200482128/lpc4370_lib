@@ -118,7 +118,7 @@ inline bool CUartInt_LPC4370::uart_config(const uint32_t &baudrate, const uint32
 
 bool CUartInt_LPC4370::Open(const LPC_USART_T *pReg, const uint32_t &baudrate, const uint32_t &config)
 {
-	if (REG_IS_VALID(m_pReg_uart))	Close();
+	if (REG_IS_VALID(m_pReg_uart))	return false;
 
 	if (update_argument(pReg) == false)	return false;
 

@@ -13,10 +13,10 @@ CGpio_LPC4370::CGpio_LPC4370()
 }
 
 
-bool CGpio_LPC4370::gpio_valid()
-{ 
-	return !(m_gpio_port == INVALID_PORT_PIN || m_gpio_pin == INVALID_PORT_PIN);
-}
+//bool CGpio_LPC4370::gpio_valid()
+//{ 
+//	return !(m_gpio_port == INVALID_PORT_PIN || m_gpio_pin == INVALID_PORT_PIN);
+//}
 //bool CGpio_LPC4370::argument_valid(CHIP_GPIO chip_gpio)
 //{
 //	return !(chip_gpio.chip_port == INVALID_PORT_PIN || chip_gpio.chip_pin == INVALID_PORT_PIN ||
@@ -51,7 +51,7 @@ bool CGpio_LPC4370::gpio_valid()
 
 bool CGpio_LPC4370::Open(const CHIP_GPIO chip_gpio, const bool output, const uint16_t config)
 {
-	if (gpio_valid() == false)	Close();
+	if (GPIO_VALID())	return false;
 	
 	m_gpio_port = chip_gpio.gpio_port;
 	m_gpio_pin = chip_gpio.gpio_pin;
@@ -107,7 +107,7 @@ inline bool CGpioInt_LPC4370::update_argument(const uint8_t &pin_int)
 
 inline bool CGpioInt_LPC4370::gpio_init_config(const GPIO_INT_TYPE gpio_int_type)
 {
-	if (!gpio_valid()  || m_pin_int == INVALID_PIN_INT)	return false;
+	if (GPIO_VALID() == false || m_pin_int == INVALID_PIN_INT)	return false;
 
 	Chip_PININT_Init(LPC_GPIO_PIN_INT);
 
@@ -145,24 +145,6 @@ inline bool CGpioInt_LPC4370::gpio_init_config(const GPIO_INT_TYPE gpio_int_type
 	return true;
 }
 
-//
-//bool CGpioInt_LPC4370::Open(const uint8_t chip_port, const uint8_t chip_pin, 
-//														const uint8_t gpio_port, const uint8_t gpio_pin, const uint16_t func_index, 
-//														const uint8_t pin_int, const GPIO_INT_TYPE gpio_int_type)
-//{
-//
-//	if (CGpio_LPC4370::Open(chip_port, chip_pin, gpio_port, gpio_pin, GPIO_DIR_INPUT, (SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | func_index)) == false)
-//		return false;
-//	
-//	if (update_argument(pin_int) == false)
-//		return false;
-//
-//	if (gpio_init_config(gpio_int_type) == false)
-//		return false;
-//
-//	return true;
-//
-//}
 
 bool CGpioInt_LPC4370::Open(const CHIP_GPIO chip_gpio, const uint8_t pin_int, const GPIO_INT_TYPE gpio_int_type)
 {

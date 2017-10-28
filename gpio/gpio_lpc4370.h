@@ -13,6 +13,7 @@
 class CGpio_LPC4370
 {
 //type definition
+#define GPIO_VALID() (m_gpio_port != INVALID_PORT_PIN && m_gpio_pin != INVALID_PORT_PIN)
 public:
 	typedef struct __chip_gpio
 	{
@@ -28,10 +29,6 @@ public:
 	CGpio_LPC4370();
 	~CGpio_LPC4370(){}
 
-	//bool Open(const uint8_t chip_port, const uint8_t chip_pin, 
-	//			const uint8_t gpio_port, const uint8_t gpio_pin, 
-	//			const bool output, const uint16_t config);
-
 	bool Open(const CHIP_GPIO chip_gpio, const bool output, const uint16_t config);
 
 	virtual void Close();
@@ -45,7 +42,7 @@ protected:
 	uint8_t m_gpio_pin;
 
 
-	bool gpio_valid();
+	//bool gpio_valid();
 	//bool argument_valid(CHIP_GPIO chip_gpio);
 
 
