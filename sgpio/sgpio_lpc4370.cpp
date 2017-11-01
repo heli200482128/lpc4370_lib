@@ -64,7 +64,7 @@ void CSGpio_Pin_LPC4370::Set_OutMuxCfg(OMC_PinOutCfg pinOutCfg, OMC_PinOeCfg pin
 	LPC_SGPIO->OUT_MUX_CFG[SGPIO_INDEX(m_sgpio_pin)] = (pinOutCfg << 0) | (pinOeCfg << 4);
 }
 
-bool CSGpio_Pin_LPC4370::Get_GpioInReg()
+inline bool CSGpio_Pin_LPC4370::Get_GpioInReg()
 {
 	return ((LPC_SGPIO->GPIO_INREG & (0x1 << SGPIO_INDEX(m_sgpio_pin))) != 0);
 }

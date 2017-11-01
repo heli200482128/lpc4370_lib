@@ -1,6 +1,5 @@
 #include "timer_lpc4370.h"
 
-
 CTimer_LPC4370::CTimer_LPC4370() : m_pReg_timer(INVALID_REG),m_frequency(0) 
 {
 }
@@ -10,30 +9,32 @@ CTimer_LPC4370::~CTimer_LPC4370()
 {
 }
 
-bool CTimer_LPC4370::Open(LPC_TIMER_T* pReg, uint32_t frequency)
+bool CTimer_LPC4370::Open(LPC_TIMER_T* pReg, uint32_t frequency, uint32_t priority)
 {
 	if (REG_IS_VALID(m_pReg_timer))	return false;
 
 	if (update_argument(pReg, frequency) == false)	return false;
 
-	/* Get timer peripheral clock rate */
-	uint32_t timerFreq = Chip_Clock_GetRate(m_ccu_clk);
 
 	/* Enable timer clock and reset it */
 	Chip_TIMER_Init(m_pReg_timer);
 	Chip_RGU_TriggerReset(m_rgu_reset);
 	while (Chip_RGU_InReset(m_rgu_reset)) {}
 	 
+	/* Get timer peripheral clock rate */
+	uint32_t timerFreq = Chip_Clock_GetRate(m_ccu_clk);
 
 	/* Timer setup for match and interrupt at TICKRATE_HZ */
 	Chip_TIMER_Reset(m_pReg_timer);
 	Chip_TIMER_MatchEnableInt(m_pReg_timer, m_matchnum);
 	Chip_TIMER_SetMatch(m_pReg_timer, m_matchnum,
-		(Chip_Clock_GetRate(m_ccu_clk) / m_frequency) - 1);
+		(timerFreq / m_frequency) - 1);
 	Chip_TIMER_ResetOnMatchEnable(m_pReg_timer, m_matchnum);
 	
-	Chip_TIMER_Enable(m_pReg_timer);
+	Chip_TIMER_Enable(m_pReg_timer); 
 
+
+//	NVIC_SetPriority(m_irqn_type, priority);
 
 	return true;
 }
@@ -44,6 +45,7 @@ void CTimer_LPC4370::Close()
 	if (!REG_IS_VALID(m_pReg_timer))	return;
 
 	Stop();
+
 
 	/* Disable timer */
 	Chip_TIMER_Disable(m_pReg_timer);
@@ -71,7 +73,6 @@ void CTimer_LPC4370::Stop()
 	/* Disable timer interrupt */
 	NVIC_DisableIRQ(m_irqn_type);
 
-	Chip_TIMER_MatchDisableInt(m_pReg_timer, m_matchnum);
 
 	m_bRunning = false;
 
@@ -82,7 +83,8 @@ inline bool CTimer_LPC4370::irq_handle()
 {
 	// this function is called in IRQHandle, so do not check if m_pReg_timer is valid to save time
 
-	if (Chip_TIMER_MatchPending(m_pReg_timer, m_matchnum) == false)	return false;
+	if (Chip_TIMER_MatchPending(m_pReg_timer, m_matchnum) == false)	
+		return false;
 
 	Chip_TIMER_ClearMatch(m_pReg_timer, m_matchnum);
 

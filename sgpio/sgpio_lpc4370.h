@@ -47,6 +47,7 @@ public:
 	void Close();
 
 	bool isValid() { return SGPIO_VALID(m_sgpio_pin); }
+	int sgpio_index() { return SGPIO_INDEX(m_sgpio_pin); }
 
 	//register manipulation 
 	void Set_OutMuxCfg(OMC_PinOutCfg pinOutCfg, OMC_PinOeCfg pinOeCfg);
@@ -55,6 +56,8 @@ public:
 	void Set_GpioOutReg(const bool output);
 	void Set_GpioOenReg(const bool enable);
 
+	static uint32_t GetGroup_GpioOutReg() { return LPC_SGPIO->GPIO_OUTREG; }
+	static void SetGroup_GpioOutReg(const uint32_t reg_value) { LPC_SGPIO->GPIO_OUTREG = reg_value; }
 
 private:
 

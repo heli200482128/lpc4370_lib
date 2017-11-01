@@ -1,7 +1,7 @@
 #ifndef __SPI_TIMER_SGPIO_H
 #define __SPI_TIMER_SGPIO_H
 
-
+#include <string.h>
 #include "timer\timer_lpc4370.h"
 #include "sgpio\sgpio_lpc4370.h"
 
@@ -36,14 +36,22 @@ typedef enum wordSize_t {
 /* transmission bit rate in Hz (SPI clock speed) */
 typedef uint32_t bitRate_t;
 
-typedef enum spiStage_t { 
-	SPI_BEGIN = 0, 
-	SPI_CLK_EDGE_1ST,
-	SPI_CLK_EDGE_2ND,
-	SPI_END
-} spiStage_t;
 
+typedef struct __spi_outreg
+{
+#define SPI_HEAD_LENGTH	50	//waiting for timer to be stable
 
+	uint32_t reg[SPI_HEAD_LENGTH + 130];	//value = clk_value<<clk_offset | mosi_value<<clk_offset
+											//length = SPI_HEAD_LENGTH+spi_bitcount_max*2+2
+	int offset;	//sent sequence count
+	int length;	//sequence valid length
+	void reinit()
+	{
+		memset(reg, 0, (SPI_HEAD_LENGTH + 130) * sizeof(uint32_t));
+		offset = 0;
+		length = 0;
+	}
+}SPI_OUTREG;
 
 class CSpiMaster_Timer_SGpio : public CTimer_LPC4370
 {
@@ -65,9 +73,15 @@ public:
 	void Close();
 
 	bool Start(uint32_t data);
-	//virtual void Stop();
+	void Stop();
 
 	virtual bool irq_handle();
+
+public:
+
+	SPI_OUTREG	m_spi_outreg;
+
+	uint32_t m_spi_outreg_mask;
 
 private:
 	//hw signals
@@ -75,17 +89,14 @@ private:
 	CSGpio_Pin_LPC4370 m_sgpio_pin_clk;
 	CSGpio_Pin_LPC4370 m_sgpio_pin_mosi;
 
+
 	//spi parameters
 	wordSize_t		m_wordLenght;			// select the number of bits transmitted per word
 	clockPhase_t 	m_clockPhase;			// SPI phase 0 or 1 transfer format
-	//clockPolarity_t	m_clockPolarity;		// clock idle high or low
 	bitRate_t		m_bitRateHz;			// speed of the spi interface
 
 	//temporary
-	uint32_t	m_bits;
-	int8_t		m_bit_offset;
 	bool		m_clk_idle_level;
-	spiStage_t	m_spi_stage;
 
 	void reset_signals() {
 		m_sgpio_pin_cs.Set_GpioOutReg(true);

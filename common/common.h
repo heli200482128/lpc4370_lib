@@ -11,4 +11,8 @@
 
 #define FLOAT_EQU_0(x)	(abs(x)<0.00001)
 
+
+void delay_us(unsigned int t_us);
+
+
 #endif

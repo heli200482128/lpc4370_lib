@@ -265,7 +265,7 @@ bool CMessage_ADSB::Get_ADSBManchester(bool *p_manchester, unsigned int &manches
 
 	unsigned int manchester_length_tmp = 0;
 
-	//translate adsb fields, not including pi, into manchester code, and store byte format into adsb_data for crc
+	//translate adsb fields(MSB first), not including pi, into manchester code, and store byte format into adsb_data for crc
 	PNODE_MESSAGE_FIELD p_field = m_list_field;
 	while (p_field)
 	{
